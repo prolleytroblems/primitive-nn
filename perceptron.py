@@ -137,12 +137,13 @@ class Network:
         #print("final output", outputs)
         return outputs
 
-    def evaluate(self, inputs, expectations):
+    def evaluate(self, dataset):
         error=0
-        outputs=self(np.array(inputs))
-        for diff in expectations-outputs:
-            error+=diff*diff
-        return error/len(outputs)
+        for key in dataset:
+            outputs=self(np.array(key))
+            for diff in dataset[key]-outputs:
+                error+=diff*diff
+        return error/len(set)
 
     def backprop(self, inputs, expectations):
         outputs=self(inputs)
@@ -151,10 +152,8 @@ class Network:
         for i in range(1,len(self.layers)):
             weighed_delta=np.array(self.layers[-i].backprop(weighed_delta))
 
-        error= self.evaluate(inputs, expectations)
-        #print()
-        #print()
-        return error
+        #error= self.evaluate(inputs, expectations)
+        #return error
 
     def train(self, data):
         assert isinstance(data, dict)
@@ -165,7 +164,7 @@ class Network:
 
 
 if __name__=="__main__":
-    nn=Network(2, l_rate=i*0.05)
+    nn=Network(2)
     nn.add_layer(4)
     nn.add_layer(4)
     nn.add_layer(4)
@@ -173,11 +172,9 @@ if __name__=="__main__":
     for i in range(1,8,1):
         start=datetime.now()
         nntest=copy.copy(nn)
+        nntest.l_test=i*0.05
         for i in range(5000):
             nntest.train(train_set)
             if i%1000==0:
                 print("generation", i, ":", (datetime.now()-start).seconds+(datetime.now()-start).microseconds/10**6,"seconds elapsed")
-        print(nntest((0,0)))
-        print(nntest((0,1)))
-        print(nntest((1,0)))
-        print(nntest((1,1)))
+        print("error", evaluate(train_set))
