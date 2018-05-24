@@ -5,10 +5,6 @@ from datetime import datetime
 import copy
 
 
-train_set={(1,1):1,
-           (1,0):0,
-           (0,1):0,
-           (0,0):0}
 
 class Perceptron:
 
@@ -143,7 +139,7 @@ class Network:
             outputs=self(np.array(key))
             for diff in dataset[key]-outputs:
                 error+=diff*diff
-        return error/len(set)
+        return error/len(dataset)
 
     def backprop(self, inputs, expectations):
         outputs=self(inputs)
@@ -164,17 +160,4 @@ class Network:
 
 
 if __name__=="__main__":
-    nn=Network(2)
-    nn.add_layer(4)
-    nn.add_layer(4)
-    nn.add_layer(4)
-    nn.add_layer(1)
-    for i in range(1,8,1):
-        start=datetime.now()
-        nntest=copy.copy(nn)
-        nntest.l_test=i*0.05
-        for i in range(5000):
-            nntest.train(train_set)
-            if i%1000==0:
-                print("generation", i, ":", (datetime.now()-start).seconds+(datetime.now()-start).microseconds/10**6,"seconds elapsed")
-        print("error", evaluate(train_set))
+    pass
