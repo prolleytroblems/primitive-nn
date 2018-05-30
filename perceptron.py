@@ -95,11 +95,11 @@ class Neuron(Perceptron):
 
 
 class Layer:
-    def __init__(self, input_layer, nodes, l_rate=0.1):
+    def __init__(self, input_layer, nodes, l_rate=0.1, func="logistic"):
         assert isinstance(input_layer, Layer)
         self.neurons=[]
         for i in range(nodes):
-            self.neurons.append(Neuron(input_layer, l_rate))
+            self.neurons.append(Neuron(input_layer, l_rate, func))
         self.output_cache=None
 
     def __call__(self, inputs):
