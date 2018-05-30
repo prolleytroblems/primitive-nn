@@ -50,8 +50,8 @@ class Perceptron:
 
 class Neuron(Perceptron):
 
-    def __init__(self, input_layer, l_rate=0.1):
-        super().__init__(len(input_layer), l_rate)
+    def __init__(self, input_layer, l_rate=0.1, function="relu"):
+        super().__init__(len(input_layer), l_rate, function)
         self.input_layer=input_layer
         self.output=None
 
@@ -60,11 +60,35 @@ class Neuron(Perceptron):
         self.output=output
         return output
 
-    def deriv(self, x):
-        return exp(x)/(1+exp(x))**2
+    def deriv(self, x=None):
+        if x==None:
+            if self.function=="logistic":
+                return self.output*(1-self.output)
+            elif self.function=="relu":
+                if self.output<0:
+                    return 0
+                else:
+                    return 1
+            elif self.function==None:
+                return 1
+            else:
+                raise Exception()
+        else:
+            if self.function=="logistic":
+                return exp(x)/(1+exp(x))**2
+            elif self.fuction=="relu":
+                if x<0:
+                    return 0
+                else:
+                    return 1
+            elif self.function==None:
+                return 1
+            else:
+                raise Exception()
+
 
     def train(self, weighed_deltas):
-        my_delta=sum(self.output*(1-self.output)*weighed_deltas)
+        my_delta=sum(self.deriv()*weighed_deltas)
         prev_outputs=self.input_layer.output_cache
         self.weights-=self.l_rate*np.concatenate((prev_outputs, np.array([1])), axis=0)*my_delta
         return my_delta*self.weights
