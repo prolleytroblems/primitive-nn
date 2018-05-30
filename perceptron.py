@@ -20,18 +20,9 @@ class Perceptron:
         inputs=np.concatenate((inputs, np.array([1])), axis=0)
         for weight, input in zip(self.weights, inputs):
             sum+=input*weight
-        #print(inputs[0], self.weights, 1/(1+exp(-sum)))
         return 1/(1+exp(-sum))
 
-    """def __call__(self, inputs):
-        assert len(inputs)==len(self.weights)-1
-        inputs=np.array(inputs)
-        sum=0
-        inputs=np.concatenate((inputs, np.array([1])), axis=0)
-        for weight, input in zip(self.weights, inputs):
-            sum+=input*weight
-        #print(inputs[0], self.weights, sum)
-        return sum"""
+
 
     def train(self, training_set):
         error=0
@@ -61,15 +52,9 @@ class Neuron(Perceptron):
         return exp(x)/(1+exp(x))**2
 
     def train(self, weighed_deltas):
-        #print("output", self.output)
-        #print("weighed_deltas", weighed_deltas)
         my_delta=sum(self.output*(1-self.output)*weighed_deltas)
-        #print(1, my_delta)
         prev_outputs=self.input_layer.output_cache
-        #print(2, prev_outputs)
-        #print(3, self.weights)
         self.weights-=self.l_rate*np.concatenate((prev_outputs, np.array([1])), axis=0)*my_delta
-        #print(4, self.weights)
         return my_delta*self.weights
 
 
@@ -132,7 +117,6 @@ class Network:
             outputs=inputs
             for layer in self.layers:
                 outputs=layer(outputs)
-            #print("final output", outputs)
             return outputs
         elif self.__type=="classifier":
             inputs=np.array(inputs)
