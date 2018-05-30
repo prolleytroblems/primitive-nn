@@ -8,10 +8,11 @@ import copy
 
 class Perceptron:
 
-    def __init__(self, inputs, l_rate=0.05):
+    def __init__(self, inputs, l_rate=0.05, function="logistic"):
         assert type(inputs)==int
         self.weights=2*np.random.rand(inputs+1)-1
         self.l_rate=l_rate
+        self.function=function
 
     def __call__(self, inputs):
         assert len(inputs)==len(self.weights)-1
@@ -20,9 +21,20 @@ class Perceptron:
         inputs=np.concatenate((inputs, np.array([1])), axis=0)
         for weight, input in zip(self.weights, inputs):
             sum+=input*weight
-        return 1/(1+exp(-sum))
+        return self.activationf(sum)
 
-
+    def activationf(self, u):
+        if self.function=="logistic":
+            return 1/(1+exp(-u))
+        elif self.function=="relu":
+            if u<0:
+                return 0
+            else:
+                return u
+        elif self.function==None:
+            return u
+        else:
+            raise Exception()
 
     def train(self, training_set):
         error=0
