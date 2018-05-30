@@ -143,8 +143,8 @@ class Network:
         self.l_rate=l_rate
         self.__type=type
 
-    def add_layer(self, nodes):
-        self.layers.append(Layer(self.layers[len(self.layers)-1], nodes, l_rate=self.l_rate))
+    def add_layer(self, nodes, func="logistic"):
+        self.layers.append(Layer(self.layers[len(self.layers)-1], nodes, l_rate=self.l_rate, func=func))
         return self
 
     def __call__(self, inputs):
