@@ -136,12 +136,12 @@ class InputLayer(Layer):
         raise Exception()
 
 class Network:
-    def __init__(self, inputs, l_rate=0.1, type="regressor"):
+    def __init__(self, inputs, l_rate=0.1, ntype="regressor"):
         assert type(inputs)==int
         self.inputs=inputs
         self.layers=[InputLayer(inputs)]
         self.l_rate=l_rate
-        self.__type=type
+        self.__type=ntype
 
     def add_layer(self, nodes, func="logistic"):
         self.layers.append(Layer(self.layers[len(self.layers)-1], nodes, l_rate=self.l_rate, func=func))
@@ -177,21 +177,21 @@ class Network:
             mistakes=0
             for key in dataset:
                 outputs=self(np.array(key))
-                if np.where(outputs==max(outputs))!=np.where(np.array(dataset[key])==max(dataset[key])):
+                if np.where(np.array(outputs)==max(outputs))[0]!=np.where(np.array(dataset[key])==max(dataset[key]))[0]:
                     mistakes+=1
             return mistakes/len(dataset)
         else:
             raise Exception()
 
     def backprop(self, inputs, expectations):
-        if type=="regressor":
-            outputs=self(inputs)
+        if self.__type=="regressor":
+            outputs=np.array(self(inputs))
             weighed_delta=np.array([(outputs-np.array(expectations))/len(outputs)])
             for i in range(1,len(self.layers)):
                 weighed_delta=np.array(self.layers[-i].backprop(weighed_delta))
         elif self.__type=="classifier":
-            outputs=self(inputs)
-            weighed_delta=np.array([(outputs-np.array(expectations))/len(outputs)])*outputs(1-outputs)
+            outputs=np.array(self(inputs))
+            weighed_delta=np.array([(outputs-np.array(expectations))/len(outputs)])*outputs*(1-outputs)
             for i in range(1,len(self.layers)):
                 weighed_delta=np.array(self.layers[-i].backprop(weighed_delta))
         else:
