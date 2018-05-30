@@ -199,7 +199,7 @@ class Network:
 
     def train(self, data):
         assert isinstance(data, dict)
-        for key in data:
+        for key in random.sample(list(data), len(data)):
             self.backprop(np.array(key), np.array(data[key]))
         return 1
 
