@@ -5,12 +5,13 @@ from datetime import datetime
 import copy
 
 
-
 class Perceptron:
 
     def __init__(self, inputs, l_rate=0.05, function="logistic"):
         assert type(inputs)==int
         self.weights=2*np.random.rand(inputs+1)-1
+        if function=="relu":
+            self.weights=self.weights/4
         self.l_rate=l_rate
         self.function=function
 
@@ -50,10 +51,11 @@ class Perceptron:
 
 class Neuron(Perceptron):
 
-    def __init__(self, input_layer, l_rate=0.1, function="relu"):
+    def __init__(self, input_layer, l_rate=0.1, function="logistic", weight_penalty=0.0001):
         super().__init__(len(input_layer), l_rate, function)
         self.input_layer=input_layer
         self.output=None
+        self.weight_penalty=weight_penalty
 
     def __call__(self, inputs):
         output=super().__call__(inputs)
@@ -86,21 +88,43 @@ class Neuron(Perceptron):
             else:
                 raise Exception()
 
-
     def train(self, weighed_deltas):
         my_delta=sum(self.deriv()*weighed_deltas)
         prev_outputs=self.input_layer.output_cache
-        self.weights-=self.l_rate*np.concatenate((prev_outputs, np.array([1])), axis=0)*my_delta
+        self.weights-=self.l_rate*np.concatenate((prev_outputs, np.array([1])), axis=0)*my_delta+np.array(list(map(lambda x: abs(x)/x*self.weight_penalty, self.weights)))
         return my_delta*self.weights
 
 
 class Layer:
-    def __init__(self, input_layer, nodes, l_rate=0.1, func="logistic"):
+    def __init__(self, input_layer, nodes, l_rate=0.1, function="logistic"):
         assert isinstance(input_layer, Layer)
         self.neurons=[]
         for i in range(nodes):
-            self.neurons.append(Neuron(input_layer, l_rate, func))
+            self.neurons.append(Neuron(input_layer, l_rate, function=None))
         self.output_cache=None
+        self.function=function
+        self.is_output = property(*self.propset())
+
+
+    def propset(self):
+        doc = "The is_output property."
+        self._is_output=True
+        def fget(self):
+            return self._is_output
+        def fset(self, value):
+            if value==False:
+                for i in len(self.neurons):
+                    self.neurons[i].function=self.function
+            elif value==True:
+                for i in len(self.neurons):
+                    self.neurons[i].function=None
+            else:
+                raise Exception()
+            self._is_output = value
+        def fdel(self):
+            raise Exception()
+        return (fget, fset, fdel, doc)
+
 
     def __call__(self, inputs):
         assert isinstance(inputs, np.ndarray)
@@ -136,15 +160,19 @@ class InputLayer(Layer):
         raise Exception()
 
 class Network:
-    def __init__(self, inputs, l_rate=0.1, ntype="regressor"):
+    def __init__(self, inputs, l_rate=0.1, ntype="regressor", func="logistic"):
         assert type(inputs)==int
         self.inputs=inputs
         self.layers=[InputLayer(inputs)]
         self.l_rate=l_rate
         self.__type=ntype
+        self.default_function=func
 
-    def add_layer(self, nodes, func="logistic"):
-        self.layers.append(Layer(self.layers[len(self.layers)-1], nodes, l_rate=self.l_rate, func=func))
+    def add_layer(self, nodes, function=None):
+        if function==None:
+            function=self.default_function
+        self.layers[-1].is_output=False
+        self.layers.append(Layer(self.layers[len(self.layers)-1], nodes, l_rate=self.l_rate, function=function))
         return self
 
     def __call__(self, inputs):
