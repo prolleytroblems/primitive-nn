@@ -7,13 +7,10 @@ import copy
 
 class Perceptron:
 
-    def __init__(self, inputs, l_rate=0.05, function="logistic"):
+    def __init__(self, inputs, l_rate=0.05):
         assert type(inputs)==int
         self.weights=2*np.random.rand(inputs+1)-1
-        if function=="relu":
-            self.weights=self.weights/4
         self.l_rate=l_rate
-        self.function=function
 
     def __call__(self, inputs):
         assert len(inputs)==len(self.weights)-1
@@ -25,17 +22,8 @@ class Perceptron:
         return self.activationf(sum)
 
     def activationf(self, u):
-        if self.function=="logistic":
-            return 1/(1+exp(-u))
-        elif self.function=="relu":
-            if u<0:
-                return 0
-            else:
-                return u
-        elif self.function==None:
-            return u
-        else:
-            raise Exception()
+        return 1/(1+exp(-u))
+
 
     def train(self, training_set):
         error=0
@@ -51,8 +39,8 @@ class Perceptron:
 
 class Neuron(Perceptron):
 
-    def __init__(self, input_layer, l_rate=0.1, function="logistic", weight_penalty=0.0001):
-        super().__init__(len(input_layer), l_rate, function)
+    def __init__(self, input_layer, l_rate=0.1, weight_penalty=0):
+        super().__init__(len(input_layer), l_rate)
         self.input_layer=input_layer
         self.output=None
         self.weight_penalty=weight_penalty
@@ -64,67 +52,28 @@ class Neuron(Perceptron):
 
     def deriv(self, x=None):
         if x==None:
-            if self.function=="logistic":
-                return self.output*(1-self.output)
-            elif self.function=="relu":
-                if self.output<0:
-                    return 0
-                else:
-                    return 1
-            elif self.function==None:
-                return 1
-            else:
-                raise Exception()
+            return self.output*(1-self.output)
         else:
-            if self.function=="logistic":
-                return exp(x)/(1+exp(x))**2
-            elif self.fuction=="relu":
-                if x<0:
-                    return 0
-                else:
-                    return 1
-            elif self.function==None:
-                return 1
-            else:
-                raise Exception()
+            return exp(x)/(1+exp(x))**2
 
     def train(self, weighed_deltas):
+        if any(weight>100 for weight in weighed_deltas):
+            print(weighed_deltas, "delts")
         my_delta=sum(self.deriv()*weighed_deltas)
         prev_outputs=self.input_layer.output_cache
         self.weights-=self.l_rate*np.concatenate((prev_outputs, np.array([1])), axis=0)*my_delta+np.array(list(map(lambda x: abs(x)/x*self.weight_penalty, self.weights)))
+        if any(weight>100 for weight in self.weights):
+            print(self.weights, "weights")
         return my_delta*self.weights
 
 
 class Layer:
-    def __init__(self, input_layer, nodes, l_rate=0.1, function="logistic"):
+    def __init__(self, input_layer, nodes, l_rate=0.1):
         assert isinstance(input_layer, Layer)
         self.neurons=[]
         for i in range(nodes):
-            self.neurons.append(Neuron(input_layer, l_rate, function=None))
+            self.neurons.append(Neuron(input_layer, l_rate))
         self.output_cache=None
-        self.function=function
-        self.is_output = property(*self.propset())
-
-
-    def propset(self):
-        doc = "The is_output property."
-        self._is_output=True
-        def fget(self):
-            return self._is_output
-        def fset(self, value):
-            if value==False:
-                for i in len(self.neurons):
-                    self.neurons[i].function=self.function
-            elif value==True:
-                for i in len(self.neurons):
-                    self.neurons[i].function=None
-            else:
-                raise Exception()
-            self._is_output = value
-        def fdel(self):
-            raise Exception()
-        return (fget, fset, fdel, doc)
-
 
     def __call__(self, inputs):
         assert isinstance(inputs, np.ndarray)
@@ -160,70 +109,39 @@ class InputLayer(Layer):
         raise Exception()
 
 class Network:
-    def __init__(self, inputs, l_rate=0.1, ntype="regressor", func="logistic"):
+    def __init__(self, inputs, l_rate=0.1):
         assert type(inputs)==int
         self.inputs=inputs
         self.layers=[InputLayer(inputs)]
         self.l_rate=l_rate
-        self.__type=ntype
-        self.default_function=func
 
-    def add_layer(self, nodes, function=None):
-        if function==None:
-            function=self.default_function
-        self.layers[-1].is_output=False
-        self.layers.append(Layer(self.layers[len(self.layers)-1], nodes, l_rate=self.l_rate, function=function))
+    def add_layer(self, nodes):
+        self.layers.append(Layer(self.layers[len(self.layers)-1], nodes, l_rate=self.l_rate))
         return self
 
     def __call__(self, inputs):
-        if self.__type=="regressor":
-            inputs=np.array(inputs)
-            outputs=inputs
-            for layer in self.layers:
-                outputs=layer(outputs)
-            return outputs
-        elif self.__type=="classifier":
-            inputs=np.array(inputs)
-            outputs=inputs
-            for layer in self.layers:
-                outputs=layer(outputs)
-            exp_sum=sum([exp(output) for output in outputs])
-            outputs=[exp(output)/exp_sum for output in outputs]
-            return outputs
-        else:
-            raise Exception()
+        inputs=np.array(inputs)
+        outputs=inputs
+        for layer in self.layers:
+            outputs=layer(outputs)
+        return outputs
+
 
     def evaluate(self, dataset):
-        if self.__type=="regressor":
-            error=0
-            for key in dataset:
-                outputs=self(np.array(key))
-                for diff in dataset[key]-outputs:
-                    error+=diff*diff
-            return error/len(dataset)
-        elif self.__type=="classifier":
-            mistakes=0
-            for key in dataset:
-                outputs=self(np.array(key))
-                if np.where(np.array(outputs)==max(outputs))[0]!=np.where(np.array(dataset[key])==max(dataset[key]))[0]:
-                    mistakes+=1
-            return mistakes/len(dataset)
-        else:
-            raise Exception()
+        error=0
+        for key in dataset:
+            outputs=self(np.array(key))
+            for diff in dataset[key]-outputs:
+                error+=diff*diff
+        return error/len(dataset)
 
     def backprop(self, inputs, expectations):
-        if self.__type=="regressor":
-            outputs=np.array(self(inputs))
-            weighed_delta=np.array([(outputs-np.array(expectations))/len(outputs)])
-            for i in range(1,len(self.layers)):
-                weighed_delta=np.array(self.layers[-i].backprop(weighed_delta))
-        elif self.__type=="classifier":
-            outputs=np.array(self(inputs))
-            weighed_delta=np.array([(outputs-np.array(expectations))/len(outputs)])*outputs*(1-outputs)
-            for i in range(1,len(self.layers)):
-                weighed_delta=np.array(self.layers[-i].backprop(weighed_delta))
-        else:
-            raise Exception()
+
+        outputs=np.array(self(inputs))
+        weighed_delta=np.array([(outputs-np.array(expectations))/len(outputs)])
+        for i in range(1,len(self.layers)):
+            weighed_delta=np.array(self.layers[-i].backprop(weighed_delta))
+
 
     def train(self, data):
         assert isinstance(data, dict)
