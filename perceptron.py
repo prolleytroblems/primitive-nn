@@ -100,31 +100,9 @@ class Layer:
         assert isinstance(input_layer, Layer)
         self.neurons=[]
         for i in range(nodes):
-            self.neurons.append(Neuron(input_layer, l_rate, function=None))
+            self.neurons.append(Neuron(input_layer, l_rate, function=function))
         self.output_cache=None
         self.function=function
-        self.is_output = property(*self.propset())
-
-
-    def propset(self):
-        doc = "The is_output property."
-        self._is_output=True
-        def fget(self):
-            return self._is_output
-        def fset(self, value):
-            if value==False:
-                for i in len(self.neurons):
-                    self.neurons[i].function=self.function
-            elif value==True:
-                for i in len(self.neurons):
-                    self.neurons[i].function=None
-            else:
-                raise Exception()
-            self._is_output = value
-        def fdel(self):
-            raise Exception()
-        return (fget, fset, fdel, doc)
-
 
     def __call__(self, inputs):
         assert isinstance(inputs, np.ndarray)
@@ -171,7 +149,6 @@ class Network:
     def add_layer(self, nodes, function=None):
         if function==None:
             function=self.default_function
-        self.layers[-1].is_output=False
         self.layers.append(Layer(self.layers[len(self.layers)-1], nodes, l_rate=self.l_rate, function=function))
         return self
 
