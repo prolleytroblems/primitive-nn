@@ -39,19 +39,14 @@ class Network:
         """Forward propagation. \n
 
             inputs    network inputs: np.ndarray of [float]"""
-
+        inputs=np.array(inputs)
+        outputs=inputs
+        for layer in self.layers:
+            outputs=layer(outputs)
 
         if self.__type=="regressor":
-            inputs=np.array(inputs)
-            outputs=inputs
-            for layer in self.layers:
-                outputs=layer(outputs)
             return outputs
         elif self.__type=="classifier":
-            inputs=np.array(inputs)
-            outputs=inputs
-            for layer in self.layers:
-                outputs=layer(outputs)
             exp_sum=sum([exp(output) for output in outputs])
             outputs=[exp(output)/exp_sum for output in outputs]
             return outputs
@@ -88,25 +83,24 @@ class Network:
             expectations  expected output values: ndarray of [float] for regressor, ndarray of [str] for classifier"""
 
 
+        outputs=np.array(self(inputs))
+
         if self.__type=="regressor":
-            outputs=np.array(self(inputs))
             weighed_delta=np.array([(outputs-np.array(expectations))/len(outputs)])
-            for i in range(1,len(self.layers)):
-                weighed_delta=np.array(self.layers[-i].backprop(weighed_delta))
-        elif self.__type=="classifier":
-            outputs=np.array(self(inputs))
+        elif self.__type=="classifier": #because of additional function
             weighed_delta=np.array([(outputs-np.array(expectations))/len(outputs)])*outputs*(1-outputs)
-            for i in range(1,len(self.layers)):
-                weighed_delta=np.array(self.layers[-i].backprop(weighed_delta))
         else:
             raise Exception()
+
+        for i in range(1,len(self.layers)):
+            weighed_delta=np.array(self.layers[-i].backprop(weighed_delta))
 
     def train(self, dataset):
         """Train the network with iterative backpropagation.
 
             dataset   dictionary of inputs to outputs"""
 
-            
+
         assert isinstance(dataset, dict)
         for key in random.sample(list(dataset), len(dataset)):
             self.backprop(np.array(key), np.array(dataset[key]))
