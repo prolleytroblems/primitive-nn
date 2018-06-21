@@ -3,6 +3,8 @@ from math import *
 from neuron import *
 
 
+
+
 class Layer:
     def __init__(self, input_layer, nodes, l_rate=0.1, function="logistic"):
         assert isinstance(input_layer, Layer)
@@ -10,7 +12,21 @@ class Layer:
         for i in range(nodes):
             self.neurons.append(Neuron(input_layer, l_rate, function=function))
         self.output_cache=None
-        self.function=function
+
+        self.__l_rate=l_rate
+        self.__function=function
+        self.ATTR={"function":self.__function, "l_rate":self.__l_rate}
+
+    def set_attr(self, attrname, value):
+        for i in range(len(self.neurons)):
+            self.neurons[i].set_attr(attrname, value)
+
+        if attrname=="function":
+            self.function=value
+        elif attrname=="l_rate":
+            self.l_rate=l_rate
+        else:
+            raise Exception("Wrong key")
 
     def __call__(self, inputs):
         assert isinstance(inputs, np.ndarray)

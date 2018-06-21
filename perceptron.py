@@ -13,6 +13,15 @@ class Perceptron:
         self.l_rate=l_rate
         self.function=function
 
+    def set_attr(self, attrname, value):
+        if attrname=="function":
+            self.function=value
+        elif attrname=="l_rate":
+            self.l_rate=l_rate
+        else:
+            raise Exception("Wrong key")
+
+
     def __call__(self, inputs):
         assert len(inputs)==len(self.weights)-1
         inputs=np.array(inputs)
@@ -45,7 +54,7 @@ class Perceptron:
                 self.weights[i]=self.weights[i]+self.l_rate*(expectation-output)*inputs[i]
             error+=output-expectation
         return error
-        
+
 
 if __name__=="__main__":
     pass
