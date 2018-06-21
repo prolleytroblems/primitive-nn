@@ -1,24 +1,46 @@
+"""A simple fully-connected neural-network, using gradient descent"""
+
 import numpy as np
 from math import *
 from layer import *
 
 
 class Network:
-    def __init__(self, inputs, l_rate=0.1, ntype="regressor", func="logistic"):
+    """ Initiate the neural network. Requires adding layers to operate.
+
+        inputs    number of inputs: [int]\n
+        l_rate    learning rate: [float] between 0 and 1 not inclusive\n
+        ntype     network type: [str] "regressor" or "classifier"\n
+        function  default activation function: [str] "logistic", "relu" (not working), or None"""
+
+
+    def __init__(self, inputs, l_rate=0.1, ntype="regressor", function="logistic"):
         assert type(inputs)==int
         self.inputs=inputs
         self.layers=[InputLayer(inputs)]
+        assert 0<l_rate and 1>l_rate
         self.l_rate=l_rate
         self.__type=ntype
-        self.default_function=func
+        self.default_function=function
 
     def add_layer(self, nodes, function=None):
+        """Add a layer to the network. \n
+
+           nodes     number of neurons: [int]
+           function  activation function: [str] "logistic", "relu" (not working), or None"""
+
+
         if function==None:
             function=self.default_function
         self.layers.append(Layer(self.layers[len(self.layers)-1], nodes, l_rate=self.l_rate, function=function))
         return self
 
     def __call__(self, inputs):
+        """Forward propagation. \n
+
+            inputs    network inputs: np.ndarray of [float]"""
+
+
         if self.__type=="regressor":
             inputs=np.array(inputs)
             outputs=inputs
@@ -37,6 +59,11 @@ class Network:
             raise Exception()
 
     def evaluate(self, dataset):
+        """Evaluate the network.
+
+            dataset   dictionary of inputs to outputs"""
+
+
         if self.__type=="regressor":
             error=0
             for key in dataset:
@@ -55,6 +82,12 @@ class Network:
             raise Exception()
 
     def backprop(self, inputs, expectations):
+        """Perform backpropagation.
+
+            inputs        network inputs: ndarray of [float]
+            expectations  expected output values: ndarray of [float] for regressor, ndarray of [str] for classifier"""
+
+
         if self.__type=="regressor":
             outputs=np.array(self(inputs))
             weighed_delta=np.array([(outputs-np.array(expectations))/len(outputs)])
@@ -68,10 +101,15 @@ class Network:
         else:
             raise Exception()
 
-    def train(self, data):
-        assert isinstance(data, dict)
-        for key in random.sample(list(data), len(data)):
-            self.backprop(np.array(key), np.array(data[key]))
+    def train(self, dataset):
+        """Train the network with iterative backpropagation.
+
+            dataset   dictionary of inputs to outputs"""
+
+            
+        assert isinstance(dataset, dict)
+        for key in random.sample(list(dataset), len(dataset)):
+            self.backprop(np.array(key), np.array(dataset[key]))
         return 1
 
 
